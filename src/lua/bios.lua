@@ -1,4 +1,5 @@
 local address = component.list('gpu')()
-local proxy = component.proxy(address)
+local gpu = component.proxy(address)
 
-proxy.set(1, 1, 'Works!')
+computer.beep(1000, 100)
+gpu.set(1, 1, 'Hello world!')

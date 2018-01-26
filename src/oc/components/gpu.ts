@@ -1,7 +1,6 @@
 import { Component } from "./_component";
 import { FontRenderer } from "../font";
-
-const { lauxlib, lualib, lua } = fengari;
+import { lauxlib, lualib, lua, LuaState } from 'fengari';
 
 export class GpuComponent implements Component {
     private canvas: HTMLCanvasElement;

@@ -1,0 +1,56 @@
+@import './reset';
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #252526;
+}
+
+html, body, #root, .app {
+    width: 100%;
+    height: 100%;
+}
+
+.app {
+    display: flex;
+
+    &__left {
+        background: #252526;
+        padding: 1em;
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__right {
+        flex-grow: 1;
+        background: #1E1E1E;
+        border-left: solid 1px #3C3836;
+        
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.ace_editor {
+    flex-grow: 1;
+}
+
+.bar {
+    background: #1D2021;
+    padding: .5em;
+    
+    &__button {
+        font: inherit;
+        background: #3C3836;
+        border-radius: 3px;
+        border: none;
+        float: right;
+        color: rgb(214, 214, 214);
+        padding: .5em 3em;
+
+        &:active {
+            background: rgb(80, 74, 71);
+        }
+    }
+}

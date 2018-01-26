@@ -32,6 +32,7 @@ end
 -- Sandbox
 
 local sandbox = {
+    computer = computer, -- TODO Temp
     assert = assert,
     dofile = nil, -- in boot/*_base.lua
     error = error,
@@ -446,7 +447,7 @@ local function bootstrap()
 
     local code = libcomponent.invoke(eeprom, "get")
     if not code or #code == 0 then
-        return
+        error("no eeprom code found")
     end
 
     local bios, reason = load(code, "=bios", "t", sandbox)

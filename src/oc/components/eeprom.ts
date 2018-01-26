@@ -1,8 +1,13 @@
 import { Component } from "./_component";
-
-const { lauxlib, lualib, lua } = fengari;
+import { lauxlib, lualib, lua, LuaState } from 'fengari';
 
 export class EepromComponent implements Component {
+    private loader: () => string;
+
+    constructor(loader: () => string) {
+        this.loader = loader;
+    }
+
     getType(): string {
         return 'eeprom';
     }
@@ -18,7 +23,7 @@ export class EepromComponent implements Component {
 
         switch(name) {
             case 'get':
-                lua.lua_pushliteral(L, require('../lua/bios.lua'))
+                lua.lua_pushliteral(L, this.loader())
                 return 1;
         }
     }

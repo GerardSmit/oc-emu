@@ -1,7 +1,6 @@
 import { Component } from "./_component";
 import { Computer } from "../computer";
-
-const { lauxlib, lualib, lua } = fengari;
+import { lauxlib, lualib, lua, LuaState } from 'fengari';
 
 export class ComputerComponent implements Component {
     computer: Computer;

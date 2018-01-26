@@ -1,4 +1,4 @@
-const { lauxlib, lualib, lua } = fengari;
+import { lauxlib, lualib, lua, LuaState } from 'fengari';
 
 export function createUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

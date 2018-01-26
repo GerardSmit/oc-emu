@@ -1,3 +1,5 @@
+import { LuaState } from "fengari";
+
 export interface Component {
     getType(): string;
 
