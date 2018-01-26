@@ -1,10 +1,11 @@
+export interface Color {
+    r: number;
+    g: number;
+    b: number;
+}
+
 export class FontRenderer {
     private ctx: CanvasRenderingContext2D;
-
-    /**
-     * The scale of the font.
-     */
-    public scale = 1;
 
     /**
      * The cached fonts.
@@ -14,8 +15,21 @@ export class FontRenderer {
     /**
      * The raw data.
      */
-    private rawData: {[charCode: number]: string} = {};
+    private rawData: {[charCode: number]: boolean[]} = {};
     
+    /**
+     * The foreground color.
+     */
+    private foregroundColor: Color = {r: 255, g: 255, b: 255};
+    
+    /**
+     * The background color.
+     */
+    private backgroundColor: Color = {r: 0, g: 0, b: 0};
+    
+    /**
+     * FontRenderer constructor.
+     */
     public constructor() {
         this.ctx = document.createElement('canvas').getContext('2d');
     }
@@ -29,77 +43,42 @@ export class FontRenderer {
 
         for (let line of data.split('\n')) {
             const [charCodeHex, charData] = line.split(':');
+
+            if (!charData) {
+                continue;
+            }
+
             const charCode = parseInt(charCodeHex, 16);
-            this.rawData[charCode] = charData;
+            const bitData = [];
+
+            let o = 0;
+            for (let i = 0; i < charData.length; i += 2) {
+                let c = parseInt(charData.substr(i, 2), 16) & 0xFF;
+
+                for (let j = 0; j < 8; j++) {
+                    bitData.push((c & 128) > 0);
+
+                    o += 4;
+                    c <<= 1;
+                }
+            }
+            
+            this.rawData[charCode] = bitData;
         }
     }
 
-    /**
-     * Scale the given data.
-     * 
-     * @param ctx The context.
-     * @param imageData The image data.
-     * @param scale The scale.
-     */
-    private static scaleData(ctx: CanvasRenderingContext2D, imageData: ImageData, scale: number) {
-        if (scale === 1) {
-            return imageData;
-        }
-
-        const scaled = ctx.createImageData(imageData.width * scale, imageData.height * scale);
-
-        for (var row = 0; row < imageData.height; row++) {
-            for (var col = 0; col < imageData.width; col++) {
-                var sourcePixel = [
-                    imageData.data[(row * imageData.width + col) * 4 + 0],
-                    imageData.data[(row * imageData.width + col) * 4 + 1],
-                    imageData.data[(row * imageData.width + col) * 4 + 2],
-                    imageData.data[(row * imageData.width + col) * 4 + 3]
-                ];
-
-                for (var y = 0; y < scale; y++) {
-                    var destRow = row * scale + y;
-                    for (var x = 0; x < scale; x++) {
-                        var destCol = col * scale + x;
-
-                        for (var i = 0; i < 4; i++) {
-                            scaled.data[(destRow * scaled.width + destCol) * 4 + i] = sourcePixel[i];
-                        }
-                    }
-                }
-            }
-        }
-
-        return scaled;
+    setForeground(r: number, g: number, b: number) {
+        this.foregroundColor.r = r;
+        this.foregroundColor.g = g;
+        this.foregroundColor.b = b;
+        this.cache = {};
     }
 
-    /**
-     * Parse the char data.
-     * 
-     * @param charData The char data.
-     * @returns The image data.
-     */
-    private convertData(charData: string) {
-        const imageData = this.ctx.createImageData(8, 16);
-        let o = 0;
-
-        for (let i = 0; i < charData.length; i += 2) {
-            let c = parseInt(charData.substr(i, 2), 16) & 0xFF;
-
-            for (let j = 0; j < 8; j++) {
-                if (c & 128) {
-                    imageData.data[o + 0] = 0;
-                    imageData.data[o + 1] = 0;
-                    imageData.data[o + 2] = 0;
-                    imageData.data[o + 3] = 255;
-                }
-
-                o += 4;
-                c <<= 1;
-            }
-        }
-
-        return FontRenderer.scaleData(this.ctx, imageData, this.scale);
+    setBackground(r: number, g: number, b: number) {
+        this.backgroundColor.r = r;
+        this.backgroundColor.g = g;
+        this.backgroundColor.b = b;
+        this.cache = {};
     }
 
     /**
@@ -114,9 +93,30 @@ export class FontRenderer {
             return this.cache[charCode];
         }
 
-        const data = this.convertData(this.rawData[charCode]);
-        this.cache[charCode] = data;
-        return data;
+        const imageData = this.ctx.createImageData(8, 16);
+        let o = 0;
+
+        const bitData = this.rawData[charCode];
+        for (let i = 0; i < bitData.length; i++) {
+
+            if (bitData[i]) {
+                imageData.data[o + 0] = this.foregroundColor.r;
+                imageData.data[o + 1] = this.foregroundColor.g;
+                imageData.data[o + 2] = this.foregroundColor.b;
+                imageData.data[o + 3] = 255;
+            } else {
+                imageData.data[o + 0] = this.backgroundColor.r;
+                imageData.data[o + 1] = this.backgroundColor.g;
+                imageData.data[o + 2] = this.backgroundColor.b;
+                imageData.data[o + 3] = 255;
+            }
+
+            o += 4;
+        }
+
+        this.cache[charCode] = imageData;
+
+        return imageData;
     }
 
     /**
@@ -129,7 +129,7 @@ export class FontRenderer {
         for (let i = 0; i < text.length; i++) {
             const char = text.charAt(i);
             
-            if (char === '\n') {
+            if (char === '\n' || char === '\r') {
                 if(vertical) {
                     y = 0;
                     x++;
@@ -138,7 +138,7 @@ export class FontRenderer {
                     y++;
                 }
             } else {
-                ctx.putImageData(this.getData(char), x * 8 * this.scale, y * 16 * this.scale);
+                ctx.putImageData(this.getData(char), x * 8, y * 16);
                 
                 if (vertical) {
                     y++
