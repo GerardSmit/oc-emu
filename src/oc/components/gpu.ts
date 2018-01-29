@@ -1,20 +1,17 @@
-import { Component } from "./_component";
+import { IComponent } from "./_component";
 import { FontRenderer } from "../font";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
+import { Screen } from '../../ui/components/screen';
 
-export class GpuComponent implements Component {
-    private canvas: HTMLCanvasElement;
-    private fontRenderer: FontRenderer;
-    private ctx: CanvasRenderingContext2D;
+export class GpuComponent implements IComponent {
+    private screen: Screen;
 
-    private width: number;
-    private height: number;
+    public constructor(screen: Screen) {
+        this.screen = screen;
+    }
 
-    public constructor(canvas: HTMLCanvasElement, fontRenderer: FontRenderer) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext("2d");
-        this.fontRenderer = fontRenderer;
-        this.setResolution(80, 20);
+    initialize(): Promise<void> {
+        return Promise.resolve();
     }
     
     getType(): string {
@@ -30,20 +27,24 @@ export class GpuComponent implements Component {
             'fill'
         ];
     }
+    
+    isDirect(name: string): boolean {
+        return true;
+    }
 
-    invoke(name: string, L: LuaState): number {
+    invoke(name: string, L: LuaState): number|Promise<number> {
         switch(name) {
             case 'setResolution':
-                this.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2));
-                return 0;
+                lua.lua_pushboolean(L, this.screen.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2)));
+                return 1;
             case 'setForeground':
-                this.setForeground(lauxlib.luaL_checknumber(L, 1));
+                this.screen.setForeground(lauxlib.luaL_checknumber(L, 1));
                 return 0;
             case 'setBackground':
-                this.setBackground(lauxlib.luaL_checknumber(L, 1));
+                this.screen.setBackground(lauxlib.luaL_checknumber(L, 1));
                 return 0;
             case 'set':
-                this.set(
+                this.screen.set(
                     lauxlib.luaL_checknumber(L, 1), 
                     lauxlib.luaL_checknumber(L, 2), 
                     lua.to_jsstring(lauxlib.luaL_checkstring(L, 3))
@@ -51,7 +52,7 @@ export class GpuComponent implements Component {
                 return 0;
             case 'fill':
                 // TODO Vertical
-                this.fill(
+                this.screen.fill(
                     lauxlib.luaL_checknumber(L, 1), 
                     lauxlib.luaL_checknumber(L, 2), 
                     lauxlib.luaL_checknumber(L, 3), 
@@ -59,38 +60,6 @@ export class GpuComponent implements Component {
                     lua.to_jsstring(lauxlib.luaL_checkstring(L, 5))
                 );
                 return 0;
-        }
-    }
-
-    public setResolution(width: number, height: number) {
-        this.width = width;
-        this.height = height;
-        this.canvas.width = width * 8;
-        this.canvas.height = height * 16;
-        this.fill(1, 1, width, height, " ");
-    }
-
-    public setForeground(color: number) {
-        this.fontRenderer.setForeground(color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF);
-    }
-
-    public setBackground(color: number) {
-        this.fontRenderer.setBackground(color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF);
-    }
-
-    public set(x: number, y: number, value: string, vertical: boolean = false) {
-        this.fontRenderer.render(this.ctx, x - 1, y - 1, value, vertical);
-    }
-
-    public fill(x: number, y: number, width: number, height: number, value: string) {
-        let line = value.repeat(Math.floor(width / value.length))
-
-        if (line.length !== width) {
-            line = line + value.substr(0, width - line.length);
-        }
-        
-        for (let cy = y; cy < y + height; cy++) {
-            this.fontRenderer.render(this.ctx, x - 1, cy - 1, line);
         }
     }
 }

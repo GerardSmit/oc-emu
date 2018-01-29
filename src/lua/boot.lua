@@ -318,6 +318,34 @@ local sandbox = {
 sandbox._G = sandbox
 
 
+local directCache = setmetatable({}, {__mode="k"})
+local function isDirect(address, method)
+    local cacheKey = address..":"..method
+    local cachedValue = directCache[cacheKey]
+
+    if cachedValue ~= nil then
+        return cachedValue
+    end
+
+    local methods, reason = spcall(component.methods, address)
+    if not methods then
+        return false
+    end
+
+    for name, info in pairs(methods) do
+        if name == method then
+            print("=======")
+            print(method)
+            print(info.direct)
+            print("=======")
+            directCache[cacheKey] = info.direct
+            return info.direct
+        end
+    end
+
+    error("no such method", 1)
+end
+
 -------------------------------------------------------------------------------
 -- Component
 
@@ -347,7 +375,14 @@ libcomponent = {
     invoke = function(address, method, ...)
         checkArg(1, address, "string")
         checkArg(2, method, "string")
-        return component.invoke(address, method, ...)
+
+        if not isDirect(address, method) then
+            print("> YIELD")
+            return coroutine.yield()
+        else
+            print("DIRECT")
+            return component.invoke(address, method, ...)
+        end
     end,
     list = function(filter, exact)
         checkArg(1, filter, "string", "nil")
@@ -465,7 +500,7 @@ local function main()
     local ok, reason = pcall(bootstrap);
     if not ok then
         computer.beep(1000, 100)
-        print(reason)
+        print("Error: " .. reason)
     end
 end
 

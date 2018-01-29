@@ -1,12 +1,16 @@
-import { Component } from "./_component";
+import { IComponent } from "./_component";
 import { Computer } from "../computer";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
 
-export class ComputerComponent implements Component {
+export class ComputerComponent implements IComponent {
     computer: Computer;
 
     public constructor(computer: Computer) {
         this.computer = computer;
+    }
+
+    initialize(): Promise<void> {
+        return Promise.resolve();
     }
 
     getType(): string {
@@ -18,8 +22,12 @@ export class ComputerComponent implements Component {
             'beep'
         ];
     }
+    
+    isDirect(name: string): boolean {
+        return true;
+    }
 
-    invoke(name: string, L: LuaState): number {
+    invoke(name: string, L: LuaState): number|Promise<number> {
         const argCount = lua.lua_gettop(L);
 
         switch(name) {

@@ -8,11 +8,6 @@ async function init() {
     const fontRenderer = new FontRenderer();
     await fontRenderer.load();
 
-    // const computer = new Computer(canvas, fontRenderer);
-    // Computer.registerGlobals(computer);
-
-    // computer.run(require('./lua/boot.lua'))
-
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);

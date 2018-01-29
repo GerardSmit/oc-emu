@@ -4,6 +4,7 @@ declare module "fengari" {
     }
 
     interface Lua {
+        LUA_YIELD: number
         LUA_VERSION: string
 
         lua_pushjsfunction(L: LuaState, func: (L: LuaState) => number): void
@@ -33,6 +34,10 @@ declare module "fengari" {
         lua_tonumber(L: LuaState, index: number): number
         lua_type(L: LuaState, index: number): string
         luaL_typerror(L: LuaState, index: number, error: string): void
+        lua_resume(L: LuaState, n: number): number
+        lua_yield(L: LuaState, n: number): void
+        lua_newthread(L: LuaState): LuaState
+        lua_pcall(L: LuaState, a: number, b: number, c: number): number
     }
 
     interface LuaLib {
@@ -52,6 +57,7 @@ declare module "fengari" {
         luaL_tojsstring(L: LuaState, stack: number): string
         luaL_setfuncs(L: LuaState, funcs: {[name: string]: (L: LuaState) => number}, stack: number): void
         luaL_argerror(L: LuaState, index: number, extramsg: string): number;
+        luaL_loadbuffer(L: LuaState, input: Uint8Array, len: number, source: Uint8Array): void
 
         /**
          * @param glb True if the the modname should be registered in the global table.

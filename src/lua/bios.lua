@@ -1,5 +1,4 @@
-local address = component.list('gpu')()
-local gpu = component.proxy(address)
+local gpu = component.proxy(component.list('gpu')())
+local fs = component.proxy(component.list('filesystem')())
 
-computer.beep(1000, 100)
-gpu.set(1, 1, 'Hello world!')
+gpu.set(1, 1, 'FileSystem size: ' .. fs.spaceTotal())
