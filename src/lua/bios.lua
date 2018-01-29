@@ -28,5 +28,5 @@ c = c + 1
 gpu.set(1, c, "== Invoke ==")
 c = c + 1
 
-local address = component.list('filesystem')()
-gpu.set(1, c, tostring(component.invoke(address, 'spaceTotal')))
+local fs = component.proxy(component.list('filesystem')())
+gpu.set(1, c, tostring(fs.spaceTotal()))

@@ -349,9 +349,24 @@ local libcomponent
 local proxyCache = {}
 local directCache = {}
 
+local function invoke(address, method, ...)
+    checkArg(1, address, "string")
+    checkArg(2, method, "string")
+
+    if not isDirect(address, method) then
+        local co = assert(coroutine.running(), "Should be run in a coroutine")
+
+        component.invoke(address, method, co, ...)
+
+        return coroutine.yield()
+    else
+        return component.invoke(address, method, ...)
+    end
+end
+
 local componentCallback = {
     __call = function(self, ...)
-        return component.invoke(self.address, self.name, ...)
+        return invoke(self.address, self.name, ...)
     end,
     __tostring = function(self)
         return component.doc(self.address, self.name) or "function"
@@ -368,20 +383,7 @@ libcomponent = {
         end
         return result
     end,
-    invoke = function(address, method, ...)
-        checkArg(1, address, "string")
-        checkArg(2, method, "string")
-
-        if not isDirect(address, method) then
-            local co = assert(coroutine.running(), "Should be run in a coroutine")
-
-            component.invoke(address, method, co, ...)
-
-            return coroutine.yield()
-        else
-            return component.invoke(address, method, ...)
-        end
-    end,
+    invoke = invoke,
     list = function(filter, exact)
         checkArg(1, filter, "string", "nil")
 
