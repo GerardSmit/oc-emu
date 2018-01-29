@@ -334,10 +334,6 @@ local function isDirect(address, method)
 
     for name, info in pairs(methods) do
         if name == method then
-            print("=======")
-            print(method)
-            print(info.direct)
-            print("=======")
             directCache[cacheKey] = info.direct
             return info.direct
         end
@@ -377,10 +373,12 @@ libcomponent = {
         checkArg(2, method, "string")
 
         if not isDirect(address, method) then
-            print("> YIELD")
+            local co = assert(coroutine.running(), "Should be run in a coroutine")
+
+            component.invoke(address, method, co, ...)
+
             return coroutine.yield()
         else
-            print("DIRECT")
             return component.invoke(address, method, ...)
         end
     end,
@@ -485,11 +483,12 @@ local function bootstrap()
         error("no eeprom code found")
     end
 
-    local bios, reason = load(code, "=bios", "t", sandbox)
-    if not bios then
+    local biosFunc, reason = load(code, "=bios", "t", sandbox)
+    if not biosFunc then
         error("failed loading bios: " .. reason, 0)
     end
 
+    local bios = coroutine.wrap(biosFunc)
     bios()
 end
 
@@ -500,7 +499,7 @@ local function main()
     local ok, reason = pcall(bootstrap);
     if not ok then
         computer.beep(1000, 100)
-        print("Error: " .. reason)
+        print("Error: " .. tostring(reason))
     end
 end
 

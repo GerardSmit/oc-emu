@@ -27,7 +27,7 @@ export class ComputerComponent implements IComponent {
         return true;
     }
 
-    invoke(name: string, L: LuaState): number|Promise<number> {
+    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
         const argCount = lua.lua_gettop(L);
 
         switch(name) {
@@ -36,7 +36,7 @@ export class ComputerComponent implements IComponent {
                     argCount > 0 ? lauxlib.luaL_checknumber(L, 1) : 1000, 
                     argCount > 1 ? lauxlib.luaL_checknumber(L, 2) : 1000
                 );
-                return 0;
+                return [];
         }
     }
 }

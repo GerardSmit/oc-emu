@@ -45,28 +45,16 @@ export class FileSystemComponent implements IComponent {
     /**
      * @inheritDoc
      */
-    invoke(name: string, L: LuaState): number|Promise<number> {
+    async invoke(name: string, L: LuaState): Promise<any[]> {
         switch(name) {
-            case 'spaceUsed':
-                return this.fs.getSpaceUsed()
-                    .then(size => {
-                        lua.lua_pushnumber(L, size)
-                        return 1;
-                    })
-                    .catch(() => {
-                        lua.lua_pushnumber(L, 0)
-                        return 1;
-                    });
-            case 'spaceTotal':
-                return this.fs.getTotalSize()
-                    .then(size => {
-                        lua.lua_pushnumber(L, size)
-                        return 1;
-                    })
-                    .catch(() => {
-                        lua.lua_pushnumber(L, 0)
-                        return 1;
-                    });
+            case 'spaceUsed': {
+                const size = await this.fs.getSpaceUsed()
+                lua.lua_pushnumber(L, size)
+                return [await this.fs.getTotalSize()];
+            }
+            case 'spaceTotal': {
+                return [await this.fs.getTotalSize()];
+            }
         }
     }
 }

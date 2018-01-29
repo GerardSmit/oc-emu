@@ -26,13 +26,10 @@ export class EepromComponent implements IComponent {
         return true;
     }
 
-    invoke(name: string, L: LuaState): number|Promise<number> {
-        const argCount = lua.lua_gettop(L);
-
+    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
         switch(name) {
             case 'get':
-                lua.lua_pushliteral(L, this.loader())
-                return 1;
+                return [this.loader()];
         }
     }
 }

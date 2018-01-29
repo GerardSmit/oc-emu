@@ -17,10 +17,30 @@ export function lua_checkboolean(L: LuaState, index: number) {
     return false;
 }
 
-export function lua_table(L: LuaState, items: any) {
+export function lua_pushjs(L: LuaState, item: any) {
+    switch (typeof(item)) {
+        case 'string':
+            lua.lua_pushliteral(L, item);
+            break;
+        case 'number':
+            lua.lua_pushnumber(L, item);
+            break;
+        case 'boolean':
+            lua.lua_pushboolean(L, item);
+            break;
+        case 'object':
+            lua_pushjsobject(L, item);
+            break;
+        default:
+            console.error('Unknown type', typeof(item))
+            throw new Error('Unknown type')
+    }
+}
+
+export function lua_pushjsobject(L: LuaState, items: any) {
     const keys = Object.keys(items);
 
-    lua.lua_newtable(L);
+    lua.lua_createtable(L, 0, keys.length);
 
     for (let key of keys) {
         const current = items[key];
@@ -30,23 +50,7 @@ export function lua_table(L: LuaState, items: any) {
         if (current === null || current === undefined) {
             lua.lua_pushnil(L);
         } else {
-            switch (typeof(current)) {
-                case 'string':
-                    lua.lua_pushliteral(L, current);
-                    break;
-                case 'number':
-                    lua.lua_pushnumber(L, current);
-                    break;
-                case 'boolean':
-                    lua.lua_pushboolean(L, current);
-                    break;
-                case 'object':
-                    lua_table(L, current);
-                    break;
-                default:
-                    console.error('Unknown type', typeof(current))
-                    throw new Error('Unknown type')
-            }
+            lua_pushjs(L, current);
         }
 
         lua.lua_settable(L, -3);

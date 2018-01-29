@@ -1,4 +1,4 @@
-import { createUUID, lua_table, lua_checkboolean } from "./utils";
+import { createUUID, lua_pushjsobject, lua_checkboolean } from "./utils";
 import { FontRenderer } from "./font";
 import { IComponent, ComputerComponent, GpuComponent } from "./components";
 import { EepromComponent } from "./components/eeprom";
@@ -60,21 +60,11 @@ export class Computer {
     }
 
     public async start() {
-        
-
         await Object.keys(this.compontents).map(address => this.compontents[address].initialize());
 
-        const thread = lua.lua_newthread(this.state);
         const source = lua.to_luastring(require('../lua/boot.lua'));
 
-        
-        console.log('Load', lauxlib.luaL_loadbuffer(thread, source, source.length, lua.to_luastring("=bios", true)));
-console.log('AAAAAAA', lua.lua_resume(thread, 0));
-
-
-        // while (lua.lua_resume(thread, 0) !== ThreadStatus.LUA_YIELD) {
-        //     console.log('YIELD');
-        // }
+        lauxlib.luaL_dostring(this.state, source);
     }
 
     public beep(frequency: number, duration: number) {

@@ -9,5 +9,5 @@ export interface IComponent {
 
     getMethods(): string[]
 
-    invoke(name: string, L: LuaState): number|Promise<number>;
+    invoke(name: string, L: LuaState): any[]|Promise<any[]>;
 }

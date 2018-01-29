@@ -32,24 +32,25 @@ export class GpuComponent implements IComponent {
         return true;
     }
 
-    invoke(name: string, L: LuaState): number|Promise<number> {
+    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
         switch(name) {
             case 'setResolution':
-                lua.lua_pushboolean(L, this.screen.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2)));
-                return 1;
+                return [
+                    this.screen.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2))
+                ];
             case 'setForeground':
                 this.screen.setForeground(lauxlib.luaL_checknumber(L, 1));
-                return 0;
+                return [];
             case 'setBackground':
                 this.screen.setBackground(lauxlib.luaL_checknumber(L, 1));
-                return 0;
+                return [];
             case 'set':
                 this.screen.set(
                     lauxlib.luaL_checknumber(L, 1), 
                     lauxlib.luaL_checknumber(L, 2), 
                     lua.to_jsstring(lauxlib.luaL_checkstring(L, 3))
                 );
-                return 0;
+                return [];
             case 'fill':
                 // TODO Vertical
                 this.screen.fill(
@@ -59,7 +60,7 @@ export class GpuComponent implements IComponent {
                     lauxlib.luaL_checknumber(L, 4), 
                     lua.to_jsstring(lauxlib.luaL_checkstring(L, 5))
                 );
-                return 0;
+                return [];
         }
     }
 }
