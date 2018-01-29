@@ -17,7 +17,11 @@ export function lua_checkboolean(L: LuaState, index: number) {
     return false;
 }
 
-export function lua_pushjs(L: LuaState, item: any) {
+export function lua_pushjsvalue(L: LuaState, item: any) {
+    if (item === null || item === undefined) {
+        lua.lua_pushnil(L);
+    }
+
     switch (typeof(item)) {
         case 'string':
             lua.lua_pushliteral(L, item);
@@ -29,12 +33,24 @@ export function lua_pushjs(L: LuaState, item: any) {
             lua.lua_pushboolean(L, item);
             break;
         case 'object':
-            lua_pushjsobject(L, item);
+            if (item instanceof Uint8Array) {
+                lua.lua_pushstring(L, item);
+            } else {
+                lua_pushjsobject(L, item);
+            }
             break;
         default:
             console.error('Unknown type', typeof(item))
             throw new Error('Unknown type')
     }
+}
+
+export function lua_pushjsvalues(L: LuaState, items: any[]) {
+    for (const item of items) {
+        lua_pushjsvalue(L, item);
+    }
+
+    return items.length;
 }
 
 export function lua_pushjsobject(L: LuaState, items: any) {
@@ -46,13 +62,44 @@ export function lua_pushjsobject(L: LuaState, items: any) {
         const current = items[key];
 
         lua.lua_pushliteral(L, key);
-
-        if (current === null || current === undefined) {
-            lua.lua_pushnil(L);
-        } else {
-            lua_pushjs(L, current);
-        }
+        lua_pushjsvalue(L, current);
 
         lua.lua_settable(L, -3);
     }
+}
+
+/**
+ * Waits for the promise to finish, pushes the results into the stack and resumes the thread at the given index.
+ * 
+ * @param L The state
+ * @param index The index of the thread.
+ * @param promise The promise with the result.
+ */
+export function lua_resumepromise(L: LuaState, index: number, promise: () => Promise<any[]>) {
+    if (!lua.lua_isthread(L, index)) {
+        throw new Error('Expected the index to be a thread.')
+    }
+
+    // First arg is the lua thread.
+    lua.lua_pushvalue(L, index);
+    const r = lauxlib.luaL_ref(L, lua.LUA_REGISTRYINDEX);
+    lua.lua_remove(L, index);
+
+    // Invoke the component and resume the thread with the results.
+    promise()
+        .then((results) => {
+            for (const item of results) {
+                lua_pushjsvalue(L, item);
+            }
+
+            lua.lua_rawgeti(L, lua.LUA_REGISTRYINDEX, r);
+            const n = lua.lua_gettop(L);
+            const co = lua.lua_tothread(L, n);
+            lua.lua_remove(L, n);
+            lua.lua_resume(co, L, results.length);
+            lauxlib.luaL_unref(L, lua.LUA_REGISTRYINDEX, r);
+        })
+        .catch(console.error);
+
+    return 0;
 }

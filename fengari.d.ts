@@ -14,6 +14,7 @@ declare module "fengari" {
         lua_pushnumber(L: LuaState, n: number): void
         lua_pushboolean(L: LuaState, b: boolean): void
         lua_pushnil(L: LuaState): void
+        lua_pushstring(L: LuaState, s: Uint8Array): void
         lua_pop(L: LuaState, i: number): void
         lua_remove(L: LuaState, i: number): void
         lua_newtable(L: LuaState): void

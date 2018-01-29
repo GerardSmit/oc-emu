@@ -60,7 +60,7 @@ export class Computer {
     }
 
     public async start() {
-        await Object.keys(this.compontents).map(address => this.compontents[address].initialize());
+        await Promise.all(Object.keys(this.compontents).map(address => this.compontents[address].initialize()));
 
         const source = lua.to_luastring(require('../lua/boot.lua'));
 

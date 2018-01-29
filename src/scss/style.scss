@@ -10,6 +10,16 @@ html, body, #root, .app {
     height: 100%;
 }
 
+.error {
+    color: #FF6E6E;
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .app {
     display: flex;
 

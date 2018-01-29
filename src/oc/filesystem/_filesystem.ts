@@ -24,4 +24,10 @@ export interface IFileSystem {
      * @param path The path.
      */
     getSize(path: string): Promise<number>
+
+    open(path: string, mode: string): Promise<number>
+
+    read(handle: number, count: number): Promise<Uint8Array>
+
+    write(handle: number, data: Uint8Array): Promise<Uint8Array>
 }
