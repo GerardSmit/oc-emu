@@ -32,7 +32,6 @@ end
 -- Sandbox
 
 local sandbox = {
-    computer = computer, -- TODO Temp
     assert = assert,
     dofile = nil, -- in boot/*_base.lua
     error = error,
@@ -470,6 +469,28 @@ libcomponent = {
     end
 }
 sandbox.component = libcomponent
+
+-------------------------------------------------------------------------------
+-- Computer
+local libcomputer = {
+    pullSignal = function()
+        local co = assert(coroutine.running(), "Should be run in a coroutine")
+
+        local results = table.pack(computer.pullSignal(co))
+
+        if results[1] then
+            table.remove(results, 1)
+            return table.unpack(results)
+        end
+
+        return coroutine.yield()
+    end,
+    beep = function(feq, len)
+        computer.beep(feq, len * 1000)
+    end
+}
+
+sandbox.computer = libcomputer
 
 -------------------------------------------------------------------------------
 -- Bootstrap

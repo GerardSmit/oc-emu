@@ -16,7 +16,11 @@ export function computerApi(computer: Computer) {
                 argCount > 1 ? lauxlib.luaL_checknumber(L, 2) : 1000
             );
 
-            return 1;
+            return 0;
+        },
+        pullSignal(L: LuaState) {
+            const argCount = lua.lua_gettop(L);
+            return computer.pullSignal(L, 1);
         }
     }
 }

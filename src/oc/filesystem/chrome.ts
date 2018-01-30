@@ -17,6 +17,10 @@ export class ChromeFileSystem implements IFileSystem {
         this.size = size;
     }
 
+    static isSupported() {
+        return 'webkitRequestFileSystem' in window
+    }
+
     /**
      * @inheritDoc
      */

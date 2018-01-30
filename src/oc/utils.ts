@@ -18,10 +18,6 @@ export function lua_checkboolean(L: LuaState, index: number) {
 }
 
 export function lua_pushjsvalue(L: LuaState, item: any) {
-    if (item === null || item === undefined) {
-        lua.lua_pushnil(L);
-    }
-
     switch (typeof(item)) {
         case 'string':
             lua.lua_pushliteral(L, item);
@@ -33,7 +29,9 @@ export function lua_pushjsvalue(L: LuaState, item: any) {
             lua.lua_pushboolean(L, item);
             break;
         case 'object':
-            if (item instanceof Uint8Array) {
+            if (item === null || item === undefined) {
+                lua.lua_pushnil(L);
+            } else if (item instanceof Uint8Array) {
                 lua.lua_pushstring(L, item);
             } else {
                 lua_pushjsobject(L, item);
@@ -46,8 +44,8 @@ export function lua_pushjsvalue(L: LuaState, item: any) {
 }
 
 export function lua_pushjsvalues(L: LuaState, items: any[]) {
-    for (const item of items) {
-        lua_pushjsvalue(L, item);
+    for (let i = 0; i < items.length; i++) {
+        lua_pushjsvalue(L, items[i]);
     }
 
     return items.length;
@@ -58,7 +56,8 @@ export function lua_pushjsobject(L: LuaState, items: any) {
 
     lua.lua_createtable(L, 0, keys.length);
 
-    for (let key of keys) {
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
         const current = items[key];
 
         lua.lua_pushliteral(L, key);
@@ -86,20 +85,18 @@ export function lua_resumepromise(L: LuaState, index: number, promise: () => Pro
     lua.lua_remove(L, index);
 
     // Invoke the component and resume the thread with the results.
-    promise()
-        .then((results) => {
-            for (const item of results) {
-                lua_pushjsvalue(L, item);
-            }
+    promise().then((results) => {
+        for (const item of results) {
+            lua_pushjsvalue(L, item);
+        }
 
-            lua.lua_rawgeti(L, lua.LUA_REGISTRYINDEX, r);
-            const n = lua.lua_gettop(L);
-            const co = lua.lua_tothread(L, n);
-            lua.lua_remove(L, n);
-            lua.lua_resume(co, L, results.length);
-            lauxlib.luaL_unref(L, lua.LUA_REGISTRYINDEX, r);
-        })
-        .catch(console.error);
+        lua.lua_rawgeti(L, lua.LUA_REGISTRYINDEX, r);
+        const n = lua.lua_gettop(L);
+        const co = lua.lua_tothread(L, n);
+        lua.lua_remove(L, n);
+        lua.lua_resume(co, L, results.length);
+        lauxlib.luaL_unref(L, lua.LUA_REGISTRYINDEX, r);
+    }, console.error);
 
     return 0;
 }

@@ -15,20 +15,43 @@ export class App extends React.Component<AppProps, AppState> {
     private editor: AceAjax.Editor;
     private screen: Screen;
     private textArea: HTMLTextAreaElement;
+    private computer: Computer = new Computer();
 
     constructor(props: AppProps) {
         super(props);
         this.state = {};
+        this.onKeyDown = this.onKeyDown.bind(this);
+        this.onKeyUp = this.onKeyUp.bind(this);
+    }
+
+    getKey(e: KeyboardEvent) {
+        const key = String.fromCharCode(e.keyCode);
+
+        if (e.key.length > 1) {
+            return null;
+        }
+
+        return e.key;
+    }
+
+    onKeyDown(e: KeyboardEvent) {
+        if (this.editor.isFocused()) {
+            return;
+        }
+
+        this.computer.pushSignal("key_down", [this.getKey(e), e.keyCode]);
+    }
+
+    onKeyUp(e: KeyboardEvent) {
+        if (this.editor.isFocused()) {
+            return;
+        }
+
+        this.computer.pushSignal("key_up", [this.getKey(e), e.keyCode]);
     }
 
     run() {
-        const computer = new Computer();
-        computer.register('computer', computerApi(computer));
-        computer.register('component', componentApi(computer));
-        computer.registerCompontent(new EepromComponent(() => this.editor.getValue()));
-        computer.registerCompontent(new GpuComponent(this.screen));
-        computer.registerCompontent(new FileSystemComponent(new ChromeFileSystem(1024 * 1024 * 5)));
-        computer.start().catch(e => {
+        this.computer.start().catch(e => {
             this.setState({
                 error: "Darn, we couldn't initialize the computer: " + e
             })
@@ -36,6 +59,10 @@ export class App extends React.Component<AppProps, AppState> {
     }
 
     componentDidMount() {
+        window.addEventListener("keydown", this.onKeyDown);
+        window.addEventListener("keyup", this.onKeyUp);
+
+        // Initialize editor.
         this.editor = ace.edit(this.textArea);
         this.editor.setOption('theme', 'ace/theme/gruvbox');
         this.editor.setOption('mode', 'ace/mode/lua');
@@ -46,6 +73,17 @@ export class App extends React.Component<AppProps, AppState> {
             bindKey: { win: "alt-Enter" },
             exec: () => this.run()
         });
+
+        // Initialize computer.
+        this.computer.register('computer', computerApi(this.computer));
+        this.computer.register('component', componentApi(this.computer));
+        this.computer.registerCompontent(new EepromComponent(() => this.editor.getValue()));
+        this.computer.registerCompontent(new GpuComponent(this.screen));
+        
+        if (ChromeFileSystem.isSupported()) {
+            this.computer.registerCompontent(new FileSystemComponent(new ChromeFileSystem(1024 * 1024 * 5)));
+        }
+
         this.run();
     }
 
