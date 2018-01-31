@@ -1,42 +1,22 @@
-import { IComponent } from "./_component";
+import { IComponent, componentMethod } from "./_component";
 import { Computer } from "../computer";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
+import { BaseComponent, MethodType } from "./index";
+import { setTimeout } from "timers";
 
-export class ComputerComponent implements IComponent {
-    computer: Computer;
+export class ComputerComponent extends BaseComponent {
+    private computer: Computer;
 
     public constructor(computer: Computer) {
+        super('computer');
         this.computer = computer;
     }
 
-    initialize(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    getType(): string {
-        return 'computer';
-    }
-
-    getMethods(): string[] {
-        return [
-            'beep'
-        ];
-    }
-    
-    isDirect(name: string): boolean {
-        return true;
-    }
-
-    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
-        const argCount = lua.lua_gettop(L);
-
-        switch(name) {
-            case 'beep':
-                this.computer.beep(
-                    argCount > 0 ? lauxlib.luaL_checknumber(L, 1) : 1000, 
-                    argCount > 1 ? lauxlib.luaL_checknumber(L, 2) : 1000
-                );
-                return [];
-        }
+    @componentMethod(MethodType.Async, ['number|~1000', 'number|~100'])
+    beep(freq: number, duration: number) {
+        return new Promise(resolve => {
+            this.computer.beep(freq, duration);
+            setTimeout(resolve, duration);
+        })
     }
 }

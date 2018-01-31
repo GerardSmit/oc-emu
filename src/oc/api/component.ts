@@ -16,10 +16,10 @@ export function componentApi(computer: Computer) {
             const component = computer.getCompontent(address);
 
             if (!component.isDirect(method)) {
-                return lua_resumepromise(L, 1, () => component.invoke(method, L) as Promise<any[]>);
+                return lua_resumepromise(L, 1, () => component.invoke(method, L, computer) as Promise<any[]>);
             }
 
-            return lua_pushjsvalues(L, component.invoke(method, L) as any[]);
+            return lua_pushjsvalues(L, component.invoke(method, L, computer) as any[]);
         },
         list(L: LuaState) {
             const filter = lua.lua_isnil(L, 1) ? null : lua.to_jsstring(lauxlib.luaL_checkstring(L, 1));

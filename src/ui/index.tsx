@@ -70,18 +70,23 @@ export class App extends React.Component<AppProps, AppState> {
 
         // Initialize editor.
         this.editor = ace.edit(this.textArea);
-        this.editor.setOption('theme', 'ace/theme/gruvbox');
-        this.editor.setOption('mode', 'ace/mode/lua');
-        this.editor.setOption('showPrintMargin', false);
+        this.editor.setOptions({
+            theme: 'ace/theme/gruvbox',
+            mode: 'ace/mode/lua',
+            showPrintMargin: false
+        });
         this.editor.setValue(require('../lua/bios.lua'), 1);
         this.editor.commands.addCommand({
             name: "run",
             bindKey: { win: "alt-Enter" },
             exec: () => this.run()
         });
-
+        
         // Initialize computer.
-        this.computer.registerCompontent(new EepromComponent(() => this.editor.getValue()));
+        this.computer.registerCompontent(new EepromComponent(
+            () => this.editor.getValue(),
+            data => this.editor.setValue(data, -1)
+        ));
         this.computer.registerCompontent(new GpuComponent(this.screen));
         
         if (ChromeFileSystem.isSupported()) {

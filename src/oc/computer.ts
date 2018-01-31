@@ -1,7 +1,6 @@
-import { createUUID, lua_pushjsobject, lua_checkboolean, lua_pushjsvalue, lua_resumepromise } from "./utils";
+import { createUUID, lua_pushjsobject, lua_checkboolean, lua_pushjsvalue, lua_resumepromise, lua_pushjsvalues } from "./utils";
 import { FontRenderer } from "./font";
 import { IComponent, ComputerComponent, GpuComponent } from "./components";
-import { EepromComponent } from "./components/eeprom";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
 import { setTimeout } from "timers";
 
@@ -37,9 +36,7 @@ export class Computer {
             
             const {L, r} = waitThread;
 
-            for (let i = 0; i < results.length; i++) {
-                lua_pushjsvalue(L, results[i]);
-            }
+            lua_pushjsvalues(L, results);
     
             lua.lua_rawgeti(L, lua.LUA_REGISTRYINDEX, r);
             const n = lua.lua_gettop(L);
@@ -57,10 +54,7 @@ export class Computer {
             const results = this.signals.shift();
 
             lua.lua_pushboolean(L, true);
-
-            for (let i = 0; i < results.length; i++) {
-                lua_pushjsvalue(L, results[i]);
-            }
+            lua_pushjsvalues(L, results);
     
             return results.length + 1;
         } 
@@ -70,6 +64,7 @@ export class Computer {
         lua.lua_pushvalue(L, index);
         const r = lauxlib.luaL_ref(L, lua.LUA_REGISTRYINDEX);
         this.waitThread = {L, r};
+
         return 1;
     }
 

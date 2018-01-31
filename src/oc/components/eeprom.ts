@@ -1,35 +1,24 @@
-import { IComponent } from "./_component";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
+import { Computer } from "../computer";
+import { BaseComponent, componentMethod, MethodType } from "./index";
 
-export class EepromComponent implements IComponent {
-    private loader: () => string;
+export class EepromComponent extends BaseComponent {
+    private getter: () => string;
+    private setter: (data: string) => void;
 
-    constructor(loader: () => string) {
-        this.loader = loader;
+    constructor(getter: () => string, setter: (data: string) => void) {
+        super('eeprom')
+        this.getter = getter;
+        this.setter = setter;
     }
 
-    initialize(): Promise<void> {
-        return Promise.resolve();
+    @componentMethod(MethodType.Direct, [])
+    get() {
+        return this.getter();
     }
 
-    getType(): string {
-        return 'eeprom';
-    }
-
-    getMethods(): string[] {
-        return [
-            'get'
-        ];
-    }
-    
-    isDirect(name: string): boolean {
-        return true;
-    }
-
-    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
-        switch(name) {
-            case 'get':
-                return [this.loader()];
-        }
+    @componentMethod(MethodType.Direct, ['string'])
+    set(data: string) {
+        return this.setter(data);
     }
 }

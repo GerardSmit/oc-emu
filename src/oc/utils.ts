@@ -67,6 +67,22 @@ export function lua_pushjsobject(L: LuaState, items: any) {
     }
 }
 
+export function lua_getjsobject(L: LuaState, n: number) {
+    switch(lua.lua_type(L, n)) {
+		case lua.LUA_TNONE:
+		case lua.LUA_TNIL:
+			return null;
+		case lua.LUA_TBOOLEAN:
+			return lua.lua_toboolean(L, n);
+		case lua.LUA_TNUMBER:
+			return lua.lua_tonumber(L, n);
+		case lua.LUA_TSTRING:
+			return lua.lua_tojsstring(L, n);
+		default:
+			throw 'Not supported'
+	}
+}
+
 /**
  * Waits for the promise to finish, pushes the results into the stack and resumes the thread at the given index.
  * 

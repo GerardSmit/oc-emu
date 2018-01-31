@@ -3,80 +3,59 @@ import { FontRenderer } from "../font";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
 import { Screen } from '../../ui/components/screen';
 import { lua_checkboolean } from '../utils';
+import { Computer } from "../computer";
+import { BaseComponent, MethodType, componentMethod } from "./index";
 
-export class GpuComponent implements IComponent {
+export class GpuComponent extends BaseComponent {
     private screen: Screen;
 
     public constructor(screen: Screen) {
+        super('gpu');
         this.screen = screen;
     }
 
-    initialize(): Promise<void> {
-        return Promise.resolve();
-    }
-    
-    getType(): string {
-        return 'gpu';
+    @componentMethod(MethodType.Direct, ['boolean'])
+    setPrecise(precise: boolean) {
+        this.screen.setPrecise(precise)
     }
 
-    getMethods(): string[] {
-        return [
-            'setResolution',
-            'getResolution',
-            'setForeground',
-            'setBackground',
-            'setForegroundAlpha',
-            'setBackgroundAlpha',
-            'setPrecise',
-            'set',
-            'fill'
-        ];
-    }
-    
-    isDirect(name: string): boolean {
-        return true;
+    @componentMethod(MethodType.Direct, ['number', 'number'])
+    setResolution(width: number, height: number) {
+        this.screen.setResolution(width, height);
     }
 
-    invoke(name: string, L: LuaState): any[]|Promise<any[]> {
-        switch(name) {
-            case 'setPrecise':
-                this.screen.setPrecise(lua_checkboolean(L, 1))
-                return [];
-            case 'setResolution':
-                return [
-                    this.screen.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2))
-                ];
-            case 'getResolution':
-                return [this.screen.getWidth(), this.screen.getHeight()];
-            case 'setForeground':
-                this.screen.setForeground(lauxlib.luaL_checknumber(L, 1));
-                return [];
-            case 'setBackground':
-                this.screen.setBackground(lauxlib.luaL_checknumber(L, 1));
-                return [];
-            case 'setForegroundAlpha':
-                this.screen.setForegroundAlpha(lauxlib.luaL_checknumber(L, 1));
-                return [];
-            case 'setBackgroundAlpha':
-                this.screen.setBackgroundAlpha(lauxlib.luaL_checknumber(L, 1));
-                return [];
-            case 'set':
-                this.screen.set(
-                    lauxlib.luaL_checknumber(L, 1), 
-                    lauxlib.luaL_checknumber(L, 2), 
-                    lua.to_jsstring(lauxlib.luaL_checkstring(L, 3))
-                );
-                return [];
-            case 'fill':
-                // TODO Vertical
-                this.screen.fill(
-                    lauxlib.luaL_checknumber(L, 1), 
-                    lauxlib.luaL_checknumber(L, 2), 
-                    lauxlib.luaL_checknumber(L, 3), 
-                    lauxlib.luaL_checknumber(L, 4), 
-                    lua.to_jsstring(lauxlib.luaL_checkstring(L, 5))
-                );
-                return [];
-        }
+    @componentMethod(MethodType.Direct, [])
+    getResolution(width: number, height: number) {
+        return [this.screen.getWidth(), this.screen.getHeight()]
+    }
+
+    @componentMethod(MethodType.Direct, ['number'])
+    setForeground(color: number) {
+        this.screen.setForeground(color);
+    }
+
+    @componentMethod(MethodType.Direct, ['number'])
+    setBackground(color: number) {
+        this.screen.setBackground(color);
+    }
+
+    @componentMethod(MethodType.Direct, ['number'])
+    setBackgroundAlpha(color: number) {
+        this.screen.setBackgroundAlpha(color);
+    }
+
+    @componentMethod(MethodType.Direct, ['number'])
+    setForegroundAlpha(color: number) {
+        this.screen.setForegroundAlpha(color);
+    }
+
+    @componentMethod(MethodType.Direct, ['number', 'number', 'string'])
+    set(x: number, y: number, str: string) {
+        this.screen.set(x, y, str);
+    }
+
+    @componentMethod(MethodType.Direct, ['number', 'number', 'number', 'number', 'string'])
+    fill(x: number, y: number, w: number, h: number, str: string) {
+        this.screen.fill(x, y, w, h, str);
     }
 }

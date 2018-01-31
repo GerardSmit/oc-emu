@@ -8,16 +8,6 @@ export function computerApi(computer: Computer) {
 
             return 1;
         },
-        beep(L: LuaState) {
-            const argCount = lua.lua_gettop(L);
-
-            computer.beep(
-                argCount > 0 ? lauxlib.luaL_checknumber(L, 1) : 1000, 
-                argCount > 1 ? lauxlib.luaL_checknumber(L, 2) : 1000
-            );
-
-            return 0;
-        },
         pullSignal(L: LuaState) {
             return computer.pullSignal(L, 1);
         },

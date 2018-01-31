@@ -8,6 +8,12 @@ declare module "fengari" {
         LUA_VERSION: string
         LUA_REGISTRYINDEX: number
         LUA_MASKLINE: number
+        LUA_TNONE: number
+        LUA_TNIL: number
+        LUA_TBOOLEAN: number
+        LUA_TLIGHTUSERDATA: number
+        LUA_TNUMBER: number
+        LUA_TSTRING: number
 
         lua_close(L: LuaState): void
         lua_pushjsfunction(L: LuaState, func: (L: LuaState) => number): void
@@ -40,7 +46,8 @@ declare module "fengari" {
         lua_isthread(L: LuaState, index: number): boolean
         lua_isboolean(L: LuaState, index: number): boolean
         lua_tonumber(L: LuaState, index: number): number
-        lua_type(L: LuaState, index: number): string
+        lua_type(L: LuaState, index: number): number
+        lua_tojsstring(L: LuaState, index: number): string
         luaL_typerror(L: LuaState, index: number, error: string): void
         lua_resume(co: LuaState, L: LuaState, n: number): number
         lua_yield(L: LuaState, n: number): void

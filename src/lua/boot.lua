@@ -485,8 +485,8 @@ local libcomputer = {
 
         return coroutine.yield()
     end,
-    beep = function(feq, len)
-        computer.beep(feq, len * 1000)
+    beep = function(...)
+        return libcomponent.invoke(computer.address(), "beep", ...)
     end,
     sleep = function(duration)
         local co = assert(coroutine.running(), "Should be run in a coroutine")
@@ -504,11 +504,11 @@ sandbox.computer = libcomputer
 local function handle_error(reason)
     local str = tostring(reason)
 
-    if string.match(str, "boot") and string.match(str, "terminated") then
+    if string.match(str, "terminated") then
         return
     end
 
-    computer.beep(1000, 100)
+    libcomputer.beep(1000, 100)
 
     local gpuAddress = libcomponent.list("gpu")()
     if gpuAddress then
@@ -540,8 +540,7 @@ end
 
 local function bootstrap()
     -- Reset GPU
-    local gpuAddress = libcomponent.list("gpu")()
-    if gpuAddress then
+    for gpuAddress in pairs(libcomponent.list("gpu")) do
         local gpu = libcomponent.proxy(gpuAddress)
 
         gpu.setPrecise(false)

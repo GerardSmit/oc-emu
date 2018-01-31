@@ -1,6 +1,7 @@
 import { IComponent } from "./index";
 import { IFileSystem } from "../filesystem/_filesystem";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
+import { Computer } from "../computer";
 
 export class FileSystemComponent implements IComponent {
     /**
@@ -48,7 +49,7 @@ export class FileSystemComponent implements IComponent {
     /**
      * @inheritDoc
      */
-    async invoke(name: string, L: LuaState): Promise<any[]> {
+    async invoke(name: string, L: LuaState, computer: Computer): Promise<any[]> {
         const argCount = lua.lua_gettop(L);
 
         switch(name) {
