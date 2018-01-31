@@ -9,18 +9,18 @@ export class Computer {
 
     public readonly address: string;
 
-    private readonly state: LuaState;
+    private state: LuaState;
 
     private readonly compontents: {[guuid: string]: IComponent} = {};
 
     private readonly signals: any[][] = [];
 
+    public onstart: (computer: Computer) => void;
+
     private waitThread: {L: LuaState, r: number|null} = null;
 
     public constructor() {
         this.address = createUUID();
-        this.state = lauxlib.luaL_newstate();
-        lualib.luaL_openlibs(this.state);
 
         this.compontents[this.address] = new ComputerComponent(this);
     }
@@ -111,8 +111,14 @@ export class Computer {
     public async start() {
         await Promise.all(Object.keys(this.compontents).map(address => this.compontents[address].initialize()));
 
-        const source = lua.to_luastring(require('../lua/boot.lua'));
+        this.state = lauxlib.luaL_newstate();
+        lualib.luaL_openlibs(this.state);
 
+        if (this.onstart) {
+            this.onstart(this);
+        }
+
+        const source = lua.to_luastring(require('../lua/boot.lua'));
         lauxlib.luaL_dostring(this.state, source);
     }
 

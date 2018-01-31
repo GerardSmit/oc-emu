@@ -22,6 +22,7 @@ export class App extends React.Component<AppProps, AppState> {
         this.state = {};
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onKeyUp = this.onKeyUp.bind(this);
+        this.computer.onstart = this.onComputerStart.bind(this);
     }
 
     getKey(e: KeyboardEvent) {
@@ -58,6 +59,11 @@ export class App extends React.Component<AppProps, AppState> {
         });
     }
 
+    onComputerStart(computer: Computer) {
+        computer.register('computer', computerApi(computer));
+        computer.register('component', componentApi(computer));
+    }
+
     componentDidMount() {
         window.addEventListener("keydown", this.onKeyDown);
         window.addEventListener("keyup", this.onKeyUp);
@@ -75,8 +81,6 @@ export class App extends React.Component<AppProps, AppState> {
         });
 
         // Initialize computer.
-        this.computer.register('computer', computerApi(this.computer));
-        this.computer.register('component', componentApi(this.computer));
         this.computer.registerCompontent(new EepromComponent(() => this.editor.getValue()));
         this.computer.registerCompontent(new GpuComponent(this.screen));
         
