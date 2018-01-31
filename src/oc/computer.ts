@@ -1,23 +1,26 @@
-import { createUUID, lua_pushjsobject, lua_checkboolean, lua_pushjsvalue } from "./utils";
+import { createUUID, lua_pushjsobject, lua_checkboolean, lua_pushjsvalue, lua_resumepromise } from "./utils";
 import { FontRenderer } from "./font";
 import { IComponent, ComputerComponent, GpuComponent } from "./components";
 import { EepromComponent } from "./components/eeprom";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
+import { setTimeout } from "timers";
 
 export class Computer {
     public static audioContext: AudioContext = new AudioContext();
 
     public readonly address: string;
 
-    private state: LuaState;
+    private state: LuaState = null;
 
     private readonly compontents: {[guuid: string]: IComponent} = {};
 
-    private readonly signals: any[][] = [];
+    private signals: any[][] = [];
 
     public onstart: (computer: Computer) => void;
 
     private waitThread: {L: LuaState, r: number|null} = null;
+
+    private runId: number = 0;
 
     public constructor() {
         this.address = createUUID();
@@ -70,6 +73,11 @@ export class Computer {
         return 1;
     }
 
+    sleep(L: LuaState, index: number, duration: number) {
+        lua_resumepromise(L, index, () => new Promise(resolve => setTimeout(() => resolve([]), duration)));
+        return 0;
+    }
+
     registerCompontent(component: IComponent) {
         this.compontents[createUUID()] = component
     }
@@ -109,17 +117,35 @@ export class Computer {
     }
 
     public async start() {
+        this.stop();
         await Promise.all(Object.keys(this.compontents).map(address => this.compontents[address].initialize()));
 
+        this.signals = [];
+        this.waitThread = null;
         this.state = lauxlib.luaL_newstate();
+
         lualib.luaL_openlibs(this.state);
 
+        // Initialize the state.
         if (this.onstart) {
             this.onstart(this);
         }
 
+        // Stop old state if a new one is started.
+        const runId = ++this.runId;
+        lua.lua_sethook(this.state, L => {
+            if (this.runId !== runId) {
+                lauxlib.luaL_error(L, lua.to_luastring("terminated"))
+            }
+        }, lua.LUA_MASKLINE, 0);
+
+        // Run boot.lua
         const source = lua.to_luastring(require('../lua/boot.lua'));
-        lauxlib.luaL_dostring(this.state, source);
+        lauxlib.luaL_loadbuffer(this.state, source, source.byteLength, lua.to_luastring("=boot"));
+        lua.lua_pcall(this.state, 0, 0, 0)
+    }
+
+    public stop() {
     }
 
     public beep(frequency: number, duration: number) {

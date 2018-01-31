@@ -19,8 +19,12 @@ export function computerApi(computer: Computer) {
             return 0;
         },
         pullSignal(L: LuaState) {
-            const argCount = lua.lua_gettop(L);
             return computer.pullSignal(L, 1);
+        },
+        sleep(L: LuaState) {
+            const argCount = lua.lua_gettop(L);
+            const duration = lauxlib.luaL_checknumber(L, 2);
+            return computer.sleep(L, 1, duration);
         }
     }
 }

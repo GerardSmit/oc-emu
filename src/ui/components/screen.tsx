@@ -87,7 +87,7 @@ export class Screen extends React.Component<ComputerProps, {}> {
         if (value === " ") {
             const color = this.props.fontRenderer.backgroundColor;
             this.ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
-            this.ctx.fillRect(this.getX(x - 1), this.getY(x - 1), width * 8, height * 16);
+            this.ctx.fillRect(this.getX(x - 1), this.getY(y - 1), width * 8, height * 16);
             return;
         }
 

@@ -487,6 +487,13 @@ local libcomputer = {
     end,
     beep = function(feq, len)
         computer.beep(feq, len * 1000)
+    end,
+    sleep = function(duration)
+        local co = assert(coroutine.running(), "Should be run in a coroutine")
+
+        computer.sleep(co, duration * 1000)
+
+        return coroutine.yield()
     end
 }
 
@@ -494,14 +501,58 @@ sandbox.computer = libcomputer
 
 -------------------------------------------------------------------------------
 -- Bootstrap
+local function handle_error(reason)
+    local str = tostring(reason)
 
-local function bootstrap()
-    local gpu = libcomponent.list("gpu")()
-    if gpu then
-        local width, height = libcomponent.invoke(gpu, "getResolution")
-        libcomponent.invoke(gpu, "fill", 1, 1, width, height, " ")
+    if string.match(str, "boot") and string.match(str, "terminated") then
+        return
     end
 
+    computer.beep(1000, 100)
+
+    local gpuAddress = libcomponent.list("gpu")()
+    if gpuAddress then
+        local header = "Error"
+        local gpu = libcomponent.proxy(gpuAddress)
+        local width = gpu.getResolution()
+        local y = 1
+        
+        gpu.setPrecise(false)
+        gpu.setForeground(0xFF3030)
+        gpu.setBackground(0x000000)
+        
+        gpu.fill(1, y, width, 1, " ")
+        gpu.set(width / 2 - header:len() / 2, y, header)
+        y = y + 1
+    
+        gpu.fill(1, y, width, 1, "─")
+        y = y + 1
+    
+        for i = 1, #str, width do
+            gpu.fill(1, y, width, 1, " ")
+            gpu.set(1, y, str:sub(i, i + width - 1))
+            y = y + 1
+        end
+    
+        gpu.fill(1, y, width, 1, "─")
+    end
+end
+
+local function bootstrap()
+    -- Reset GPU
+    local gpuAddress = libcomponent.list("gpu")()
+    if gpuAddress then
+        local gpu = libcomponent.proxy(gpuAddress)
+
+        gpu.setPrecise(false)
+        gpu.setForeground(0xFFFFFF)
+        gpu.setBackground(0x000000)
+
+        local width, height = gpu.getResolution()
+        gpu.fill(1, 1, width, height, " ")
+    end
+
+    -- Initialize and run EEPROM
     local eeprom = libcomponent.list("eeprom")()
     if not eeprom then
         error("no bios found; install a configured EEPROM", 0)
@@ -512,12 +563,11 @@ local function bootstrap()
         error("no eeprom code found")
     end
 
-    local biosFunc, reason = load(code, "=bios", "t", sandbox)
-    if not biosFunc then
-        error("failed loading bios: " .. reason, 0)
+    local bios, reason = load(code, "=bios", "t", sandbox)
+    if not bios then
+        error("failed loading bios: " .. tostring(reason), 0)
     end
 
-    local bios = coroutine.wrap(biosFunc)
     bios()
 end
 
@@ -527,9 +577,9 @@ end
 local function main()
     local ok, reason = pcall(bootstrap);
     if not ok then
-        computer.beep(1000, 100)
-        print("Error: " .. tostring(reason))
+        print(tostring(reason))
+        handle_error(reason)
     end
 end
 
-return pcall(main)
+coroutine.wrap(main)()

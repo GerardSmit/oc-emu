@@ -94,7 +94,7 @@ export function lua_resumepromise(L: LuaState, index: number, promise: () => Pro
         const n = lua.lua_gettop(L);
         const co = lua.lua_tothread(L, n);
         lua.lua_remove(L, n);
-        lua.lua_resume(co, L, results.length);
+        const status = lua.lua_resume(co, L, results.length);
         lauxlib.luaL_unref(L, lua.LUA_REGISTRYINDEX, r);
     }, console.error);
 

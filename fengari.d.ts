@@ -7,7 +7,9 @@ declare module "fengari" {
         LUA_YIELD: number
         LUA_VERSION: string
         LUA_REGISTRYINDEX: number
+        LUA_MASKLINE: number
 
+        lua_close(L: LuaState): void
         lua_pushjsfunction(L: LuaState, func: (L: LuaState) => number): void
         lua_pushjsclosure(L: LuaState, func: (L: LuaState) => number, index: number): void
         lua_pushliteral(L: LuaState, s: string): void
@@ -25,6 +27,7 @@ declare module "fengari" {
         to_luastring(str: string, cache: boolean): Uint8Array
         to_jsstring(i: Uint8Array): string
         lua_toboolean(L: LuaState, index: number): boolean
+        lua_tostring(L: LuaState, index: number): Uint8Array
         lua_pushglobaltable(L: LuaState): void
         lua_newtable(L: LuaState): void
         lua_setglobal(L: LuaState, name: Uint8Array): void
@@ -48,6 +51,8 @@ declare module "fengari" {
         lua_toproxy(L: LuaState, n: number): any
         lua_rawgeti(L: LuaState, register: number, n: number): void
         lua_tothread(L: LuaState, n: number): LuaState;
+        lua_sethook(L: LuaState, func: (L: LuaState) => void, mask: number, n: number): void
+        lua_status(L: LuaState): number
     }
 
     interface LuaLib {
@@ -68,6 +73,7 @@ declare module "fengari" {
         luaL_setfuncs(L: LuaState, funcs: {[name: string]: (L: LuaState) => number}, stack: number): void
         luaL_argerror(L: LuaState, index: number, extramsg: string): number;
         luaL_loadbuffer(L: LuaState, input: Uint8Array, len: number, source: Uint8Array): void
+        luaL_error(L: LuaState, str: Uint8Array): void
 
         luaL_ref(L: LuaState, register: number): number
         luaL_unref(L: LuaState, register: number, n: number): void
