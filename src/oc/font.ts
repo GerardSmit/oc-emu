@@ -2,6 +2,7 @@ export interface Color {
     r: number;
     g: number;
     b: number;
+    a: number;
 }
 
 export class FontRenderer {
@@ -20,12 +21,12 @@ export class FontRenderer {
     /**
      * The foreground color.
      */
-    private foregroundColor: Color = {r: 255, g: 255, b: 255};
+    public readonly foregroundColor: Color = {r: 255, g: 255, b: 255, a: 255};
     
     /**
      * The background color.
      */
-    private backgroundColor: Color = {r: 0, g: 0, b: 0};
+    public readonly backgroundColor: Color = {r: 0, g: 0, b: 0, a: 255};
     
     /**
      * FontRenderer constructor.
@@ -74,10 +75,20 @@ export class FontRenderer {
         this.cache = {};
     }
 
+    setForegroundAlpha(a: number) {
+        this.foregroundColor.a = a;
+        this.cache = {};
+    }
+
     setBackground(r: number, g: number, b: number) {
         this.backgroundColor.r = r;
         this.backgroundColor.g = g;
         this.backgroundColor.b = b;
+        this.cache = {};
+    }
+
+    setBackgroundAlpha(a: number) {
+        this.backgroundColor.a = a;
         this.cache = {};
     }
 
@@ -103,12 +114,12 @@ export class FontRenderer {
                 imageData.data[o + 0] = this.foregroundColor.r;
                 imageData.data[o + 1] = this.foregroundColor.g;
                 imageData.data[o + 2] = this.foregroundColor.b;
-                imageData.data[o + 3] = 255;
+                imageData.data[o + 3] = this.foregroundColor.a;
             } else {
                 imageData.data[o + 0] = this.backgroundColor.r;
                 imageData.data[o + 1] = this.backgroundColor.g;
                 imageData.data[o + 2] = this.backgroundColor.b;
-                imageData.data[o + 3] = 255;
+                imageData.data[o + 3] = this.backgroundColor.a;
             }
 
             o += 4;
@@ -128,23 +139,30 @@ export class FontRenderer {
     public render(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, vertical: boolean = false) {
         for (let i = 0; i < text.length; i++) {
             const char = text.charAt(i);
-            
-            if (char === '\n' || char === '\r') {
-                if(vertical) {
-                    y = 0;
-                    x++;
-                } else {
-                    x = 0;
-                    y++;
+            const data = this.getData(char);
+
+            if (this.foregroundColor.a < 255 || this.backgroundColor.a < 255) {
+                const oldData = ctx.getImageData(x, y, data.width, data.height);
+                const finalData = this.ctx.createImageData(8, 16);
+
+                for (let i = 0; i < data.data.length; i += 4) {
+                    const percentage = data.data[i + 3] / 255;
+
+                    finalData.data[i + 0] = (1 - percentage) * oldData.data[i + 0] + percentage * data.data[i + 0];
+                    finalData.data[i + 1] = (1 - percentage) * oldData.data[i + 1] + percentage * data.data[i + 1];
+                    finalData.data[i + 2] = (1 - percentage) * oldData.data[i + 2] + percentage * data.data[i + 2];
+                    finalData.data[i + 3] = 255;
                 }
+
+                ctx.putImageData(finalData, x, y);
             } else {
-                ctx.putImageData(this.getData(char), x * 8, y * 16);
+                ctx.putImageData(data, x, y);
+            }
                 
-                if (vertical) {
-                    y++
-                } else{
-                    x++;
-                }
+            if (vertical) {
+                y += 16
+            } else{
+                x += 8;
             }
         }
     }

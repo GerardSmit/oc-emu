@@ -2,6 +2,7 @@ import { IComponent } from "./_component";
 import { FontRenderer } from "../font";
 import { lauxlib, lualib, lua, LuaState } from 'fengari';
 import { Screen } from '../../ui/components/screen';
+import { lua_checkboolean } from '../utils';
 
 export class GpuComponent implements IComponent {
     private screen: Screen;
@@ -21,8 +22,12 @@ export class GpuComponent implements IComponent {
     getMethods(): string[] {
         return [
             'setResolution',
+            'getResolution',
             'setForeground',
             'setBackground',
+            'setForegroundAlpha',
+            'setBackgroundAlpha',
+            'setPrecise',
             'set',
             'fill'
         ];
@@ -34,15 +39,26 @@ export class GpuComponent implements IComponent {
 
     invoke(name: string, L: LuaState): any[]|Promise<any[]> {
         switch(name) {
+            case 'setPrecise':
+                this.screen.setPrecise(lua_checkboolean(L, 1))
+                return [];
             case 'setResolution':
                 return [
                     this.screen.setResolution(lauxlib.luaL_checknumber(L, 1), lauxlib.luaL_checknumber(L, 2))
                 ];
+            case 'getResolution':
+                return [this.screen.getWidth(), this.screen.getHeight()];
             case 'setForeground':
                 this.screen.setForeground(lauxlib.luaL_checknumber(L, 1));
                 return [];
             case 'setBackground':
                 this.screen.setBackground(lauxlib.luaL_checknumber(L, 1));
+                return [];
+            case 'setForegroundAlpha':
+                this.screen.setForegroundAlpha(lauxlib.luaL_checknumber(L, 1));
+                return [];
+            case 'setBackgroundAlpha':
+                this.screen.setBackgroundAlpha(lauxlib.luaL_checknumber(L, 1));
                 return [];
             case 'set':
                 this.screen.set(

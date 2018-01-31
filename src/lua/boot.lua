@@ -496,6 +496,12 @@ sandbox.computer = libcomputer
 -- Bootstrap
 
 local function bootstrap()
+    local gpu = libcomponent.list("gpu")()
+    if gpu then
+        local width, height = libcomponent.invoke(gpu, "getResolution")
+        libcomponent.invoke(gpu, "fill", 1, 1, width, height, " ")
+    end
+
     local eeprom = libcomponent.list("eeprom")()
     if not eeprom then
         error("no bios found; install a configured EEPROM", 0)
